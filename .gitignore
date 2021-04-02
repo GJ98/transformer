@@ -1,0 +1,8 @@
+demo/saved
+__pycache__
+.data
+saved
+
+nohup.out
+*.swp
+*.swo
