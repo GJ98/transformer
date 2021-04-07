@@ -12,6 +12,8 @@ from metrics import scoring
 
 from transformer.transformer import Transformer
 
+if not os.path.exists(model_dir):
+    os.makedirs(model_dir)
 
 model = Transformer(d_model=d_model,
                 d_k=d_k,
@@ -27,7 +29,7 @@ model = Transformer(d_model=d_model,
                 p=p,
                 device=device)
 
-loss_fn = nn.CrossEntropyLoss()
+loss_fn = nn.CrossEntropyLoss(ignore_index=1)
 
 optimizer = Adam(params=model.parameters(),
                 lr=model_lr,
@@ -77,12 +79,9 @@ for epoch in tqdm(range(epoch), desc='epoch', total=epoch):
                                                              tr_loss_avg,
                                                              tr_acc_avg))
 
-state = {
-    'label_dict': model.label_dict,
-    'model_state_dict': model.to(torch.device('cpu').state_dict())
-}
+    state = {
+        'label_dict': model.label_dict,
+        'model_state_dict': model.to(torch.device('cpu').state_dict())
+    }
 
-if not os.path.exists(model_dir):
-    os.makedirs(model_dir)
-
-torch.save(state, model_file)
+    torch.save(state, model_file)
