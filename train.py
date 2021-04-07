@@ -31,12 +31,13 @@ loss_fn = nn.CrossEntropyLoss()
 
 optimizer = Adam(params=model.parameters(),
                 lr=model_lr,
-                weight_decay=weight_decay)
+                weight_decay=weight_decay,
+                eps=adam_eps)
 
 lr_scheduler = ReduceLROnPlateau(optimizer=optimizer,
-                                factor=lr_scheduler_factor,
-                                min_lr=lr_scheduler_min_lr,
-                                patience=lr_scheduler_patience)
+                                 factor=lr_scheduler_factor,
+                                 min_lr=lr_scheduler_min_lr,
+                                 patience=lr_scheduler_patience)
 
 for epoch in tqdm(range(epoch), desc='epoch', total=epoch):
     tqdm.write("\nepoch : {}, lr : {}".format(epoch,
@@ -56,7 +57,7 @@ for epoch in tqdm(range(epoch), desc='epoch', total=epoch):
         output = model(source, target[:, :-1])
 
         output = output.reshape(-1, output.size(-1))
-        target = target[:, 1:].contiguous().view(-1).long()
+        target = target[:, 1:].contiguous().view(-1)
 
         loss = loss_fn(output, target)
         loss.backward()

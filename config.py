@@ -26,7 +26,8 @@ p = 0.1
 
 #optimizer
 epoch = 1000
-model_lr = 1e-5
+model_lr = 0.1
+adam_eps = 5e-9
 weight_decay = 5e-4
 lr_scheduler_factor = 0.9
 lr_scheduler_min_lr = 1e-10
