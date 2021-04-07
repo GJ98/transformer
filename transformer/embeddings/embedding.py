@@ -17,6 +17,7 @@ class Embedding(nn.Module):
         """
 
         super().__init__()
+        # pad
         self.embed = nn.Embedding(num_embeddings=vocab_size,
                                   embedding_dim=d_model)
 

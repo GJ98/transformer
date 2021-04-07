@@ -6,17 +6,20 @@ from transformer.feed_forwards.position_wise_feed_forward import PositionWiseFee
 
 class FeedForward(nn.Module):
 
-    def __init__(self, d_model: int, d_ff: int):
+    def __init__(self, d_model: int, d_ff: int, p: int):
         """feed forward sub layer 구현 클래스
 
         Args:
             d_model (int):  intput, output dim
             d_ff (int): hidden dim
+            p (int): dropout probability
         """
 
         super().__init__()
         self.feed_forward = PositionWiseFeedForward(d_model=d_model,
                                                     d_ff=d_ff)
+
+        self.dropout = nn.Dropout(p=p)
 
         self.norm = nn.LayerNorm(normalized_shape=d_model)
 
@@ -33,6 +36,8 @@ class FeedForward(nn.Module):
         residual = x
 
         x = self.feed_forward(x)
+
+        x = self.dropout(x)
 
         output = self.norm(x + residual)
 

@@ -38,7 +38,7 @@ class MultiHeadAttention(nn.Module):
             v (torch.Tensor(bs, len_k, d_model)): value
             k (torch.Tensor(bs, len_k, d_model)): key
             q (torch.Tensor(bs, len_q, d_model)): query
-            mask (torch.Tensor(bs, len_q, len_k)): masking idx
+            mask (torch.Tensor(bs, 1, len_q, len_k)): masking idx
         
         Returns:
             output (torch.Tensor(bs, len_q, d_model)): forward 결과값
@@ -49,9 +49,6 @@ class MultiHeadAttention(nn.Module):
         k_linear = self.k_linear(k).view(bs, len_k, self.head, self.d_k).transpose(1, 2)
         q_linear = self.q_linear(q).view(bs, len_q, self.head, self.d_k).transpose(1, 2)
         
-        if mask is not None:
-            mask = mask.unsqueeze(1).repeat(1, self.head, 1, 1)
-
         attention = self.attention(q_linear, k_linear, v_linear, mask)
         attention = attention.transpose(1, 2).contiguous().view(bs, len_q, self.head * self.d_v)
 

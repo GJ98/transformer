@@ -24,7 +24,7 @@ class ScaledDotProductAttention(nn.Module):
             q (torch.Tensor(bs, head, len_q, d_k)): query
             k (torch.Tensor(bs, head, len_k, d_k)): key
             v (torch.Tensor(bs, head, len_k, d_v)): value
-            mask (torch.Tenso(bs, head, len_q, len_k)): masking idx
+            mask (torch.Tenso(bs, 1, len_q, len_k)): masking idx
 
         Returns:
             output (torch.Tensor(bs, head, len_q, d_v)): forward 결과값
@@ -35,7 +35,7 @@ class ScaledDotProductAttention(nn.Module):
         weight = q @ k.transpose(-1, -2) / math.sqrt(self.d_k)
 
         if mask is not None:
-            weight.masked_fill(mask==0, -1e9)
+            weight.masked_fill(mask==False, -1e9)
 
         scale_weight = self.softmax(weight)
 
