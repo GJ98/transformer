@@ -40,3 +40,5 @@ train_iter, valid_iter, test_iter = BucketIterator.splits((train_data, valid_dat
 
 enc_voc_size = len(src.vocab)
 dec_voc_size = len(trg.vocab)
+
+pad_idx = src.vocab.stoi['<pad>']

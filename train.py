@@ -16,25 +16,25 @@ if not os.path.exists(model_dir):
     os.makedirs(model_dir)
 
 model = Transformer(d_model=d_model,
-                d_k=d_k,
-                d_v=d_v,
-                head=head,
-                d_ff=d_ff,
-                n_layer=n_layer,
-                enc_vocab_size=enc_voc_size,
-                dec_vocab_size=dec_voc_size,
-                enc_len=enc_len,
-                dec_len=dec_len,
-                pad=1,
-                p=p,
-                device=device)
+                    d_k=d_k,
+                    d_v=d_v,
+                    head=head,
+                    d_ff=d_ff,
+                    n_layer=n_layer,
+                    enc_vocab_size=enc_voc_size,
+                    dec_vocab_size=dec_voc_size,
+                    enc_len=enc_len,
+                    dec_len=dec_len,
+                    pad=pad_idx,
+                    p=p,
+                    device=device)
 
-loss_fn = nn.CrossEntropyLoss(ignore_index=1)
+loss_fn = nn.CrossEntropyLoss(ignore_index=pad_idx)
 
 optimizer = Adam(params=model.parameters(),
-                lr=model_lr,
-                weight_decay=weight_decay,
-                eps=adam_eps)
+                 lr=model_lr,
+                 weight_decay=weight_decay,
+                 eps=adam_eps)
 
 lr_scheduler = ReduceLROnPlateau(optimizer=optimizer,
                                  factor=lr_scheduler_factor,
@@ -43,7 +43,7 @@ lr_scheduler = ReduceLROnPlateau(optimizer=optimizer,
 
 for epoch in tqdm(range(epoch), desc='epoch', total=epoch):
     tqdm.write("\nepoch : {}, lr : {}".format(epoch,
-                                            optimizer.param_groups[0]['lr']))
+                                              optimizer.param_groups[0]['lr']))
 
     tr_loss, tr_acc, total_num = 0, 0, 0
     model.to(device)
@@ -79,9 +79,7 @@ for epoch in tqdm(range(epoch), desc='epoch', total=epoch):
                                                              tr_loss_avg,
                                                              tr_acc_avg))
 
-    state = {
-        'label_dict': model.label_dict,
-        'model_state_dict': model.to(torch.device('cpu').state_dict())
-    }
+    if epoch % 5 == 0:
+        state_dict = model.to(torch.device('cpu')).state_dict()
 
-    torch.save(state, model_file)
+        torch.save(state_dict, model_file)
