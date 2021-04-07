@@ -20,7 +20,7 @@ class Transformer(nn.Module):
                  enc_len: int,
                  dec_len: int,
                  pad: int,
-                 p: int
+                 p: int,
                  device):
         """transformer 구현 클래스
 
