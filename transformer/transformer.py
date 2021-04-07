@@ -106,7 +106,6 @@ class Transformer(nn.Module):
         Args:
             q (torch.Tensor(bs, len_q)): query
             k (torch.Tensor(bs, len_k)): key
-            pad (int): pad id
 
         Returns:
             mask (torch.Tensor(bs, 1, len_q, len_k)): pad mask
@@ -126,7 +125,7 @@ class Transformer(nn.Module):
         return mask
 
     def get_no_peak_mask(self, q: torch.Tensor, k: torch.Tensor):
-        """sub mask 수행 함수
+        """no peak mask 수행 함수
 
         Args:
             q (torch.Tensor(bs, len_q)): query
