@@ -22,7 +22,7 @@ d_ff = 2048
 n_layer = 6
 enc_len = 256
 dec_len = 256
-drop_prob = 0.1
+p = 0.1
 
 #optimizer
 epoch = 1000

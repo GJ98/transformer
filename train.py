@@ -24,6 +24,7 @@ model = Transformer(d_model=d_model,
                 enc_len=enc_len,
                 dec_len=dec_len,
                 pad=1,
+                p=p,
                 device=device)
 
 loss_fn = nn.CrossEntropyLoss()
