@@ -68,8 +68,8 @@ def evaluate(model, iterator, loss_fn):
     _bleu_score = 0
     with torch.no_grad():
         for batch in tqdm(iterator, desc='step', total=len(iterator)):
-            src = batch.src
-            trg = batch.src
+            src = batch.src.T.contiguous()
+            trg = batch.src.T.contiguous()
             output = model(src, trg[:, :-1])
             output = output.contiguous().reshape(-1, output.size(-1))
             trg = trg[: , 1:].contiguous().view(-1)
