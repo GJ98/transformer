@@ -42,3 +42,10 @@ enc_voc_size = len(src.vocab)
 dec_voc_size = len(trg.vocab)
 
 pad_idx = src.vocab.stoi['<pad>']
+
+def idx_to_word(x, vocab):
+    words = []
+    for i in x:
+        word = vocab.itos[i]
+        words.append(word)
+    return words

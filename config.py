@@ -10,7 +10,7 @@ root_dir = os.path.abspath(os.curdir)
 _ = '\\' if platform.system() == 'Windows' else '/'
 if root_dir[len(root_dir) - 1] != _: root_dir += _
 model_dir = root_dir + "saved{_}".format(_=_)
-model_file = model_dir + "transformer"
+result_dir = root_dir + "result{_}".format(_=_)
 
 #model
 batch_size=64
@@ -26,9 +26,10 @@ p = 0.1
 
 #optimizer
 epoch = 1000
-model_lr = 0.1
+init_lr = 1e-5
 adam_eps = 5e-9
 weight_decay = 5e-4
-lr_scheduler_factor = 0.9
-lr_scheduler_min_lr = 1e-10
-lr_scheduler_patience = 10
+factor = 0.9
+patience = 10
+inf = float('inf')
+warmup = 100

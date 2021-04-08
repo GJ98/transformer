@@ -17,7 +17,8 @@ class FeedForward(nn.Module):
 
         super().__init__()
         self.feed_forward = PositionWiseFeedForward(d_model=d_model,
-                                                    d_ff=d_ff)
+                                                    d_ff=d_ff,
+                                                    p=p)
 
         self.dropout = nn.Dropout(p=p)
 
@@ -37,9 +38,9 @@ class FeedForward(nn.Module):
 
         x = self.feed_forward(x)
 
-        x = self.dropout(x)
+        x = self.norm(x + residual)
 
-        output = self.norm(x + residual)
+        output = self.dropout(x)
 
         return output
 

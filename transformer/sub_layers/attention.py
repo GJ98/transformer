@@ -44,9 +44,9 @@ class Attention(nn.Module):
 
         x = self.attention(v, k, q, mask)
 
-        x = self.dropout(x)
+        x = self.norm(x + residual)
 
-        output = self.norm(x + residual)
+        output = self.dropout(x)
 
         return output
 

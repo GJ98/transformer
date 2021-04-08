@@ -6,24 +6,26 @@ from transformer.embeddings.positional_encoding import PositionalEncoding
 
 class Embedding(nn.Module):
 
-    def __init__(self, vocab_size: int, len: int, d_model: int, device):
+    def __init__(self, vocab_size: int, len: int, d_model: int, p : int, device):
         """embedding 구현 클래스
 
         Args:
             vocab_size (int): vocabulary size
             len (int): length
             d_model (int): embedding dim
+            p (int): dropout probability
             device : device type
         """
 
         super().__init__()
-        # pad
         self.embed = nn.Embedding(num_embeddings=vocab_size,
                                   embedding_dim=d_model)
 
         self.pos_enc = PositionalEncoding(len=len,
                                           d_model=d_model,
                                           device=device)
+
+        self.dropout = nn.Dropout(p=p)
                         
     def forward(self, x: torch.Tensor):
         """forward 함수
@@ -39,6 +41,6 @@ class Embedding(nn.Module):
 
         pos_enc = self.pos_enc(x)
 
-        output = embed + pos_enc
+        output = self.dropout(embed + pos_enc)
 
         return output

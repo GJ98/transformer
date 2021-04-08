@@ -5,15 +5,16 @@ import torch
 from torch import nn
 from torch.optim import Adam
 from torch.optim.lr_scheduler import ReduceLROnPlateau
+from torchtext.data.metrics import bleu_score
 
 from config import *
 from data import *
-from metrics import scoring
 
 from transformer.transformer import Transformer
 
-if not os.path.exists(model_dir):
-    os.makedirs(model_dir)
+"""
+ref : https://github.com/GJ98/transformer-1/blob/master/train.py
+"""
 
 model = Transformer(d_model=d_model,
                     d_k=d_k,
@@ -27,59 +28,111 @@ model = Transformer(d_model=d_model,
                     dec_len=dec_len,
                     pad=pad_idx,
                     p=p,
-                    device=device)
+                    device=device).to(device)
 
 loss_fn = nn.CrossEntropyLoss(ignore_index=pad_idx)
 
 optimizer = Adam(params=model.parameters(),
-                 lr=model_lr,
+                 lr=init_lr,
                  weight_decay=weight_decay,
                  eps=adam_eps)
 
 lr_scheduler = ReduceLROnPlateau(optimizer=optimizer,
-                                 factor=lr_scheduler_factor,
-                                 min_lr=lr_scheduler_min_lr,
-                                 patience=lr_scheduler_patience)
+                                 verbose=True,
+                                 factor=factor,
+                                 patience=patience)
 
-for epoch in tqdm(range(epoch), desc='epoch', total=epoch):
-    tqdm.write("\nepoch : {}, lr : {}".format(epoch,
-                                              optimizer.param_groups[0]['lr']))
-
-    tr_loss, tr_acc, total_num = 0, 0, 0
-    model.to(device)
+def train(model, iterator, optimizer, loss_fn):
     model.train()
-    print('train')
+    epoch_loss = 0
+    for batch in tqdm(iterator, desc='step', total=len(iterator)):
+        src = batch.src.T.contiguous()
+        trg = batch.trg.T.contiguous()
 
-    for data in tqdm(train_iter, desc='step', total=len(train_iter)):
         optimizer.zero_grad()
+        output = model(src, trg[:, :-1])
+        output = output.contiguous().reshape(-1, output.size(-1))
+        trg = trg[:, 1:].contiguous().view(-1)
 
-        source = data.src.T.contiguous()
-        target = data.trg.T.contiguous()
-
-        output = model(source, target[:, :-1])
-
-        output = output.reshape(-1, output.size(-1))
-        target = target[:, 1:].contiguous().view(-1)
-
-        loss = loss_fn(output, target)
+        loss = loss_fn(output, trg)
         loss.backward()
         optimizer.step()
-        lr_scheduler.step(loss)
 
-        with torch.no_grad():
-            _correct_num, _total_num = scoring(output, target)
-            tr_loss += loss.item()
-            tr_acc += _correct_num
-            total_num += _total_num
+        epoch_loss += loss.item()
 
-    tr_loss_avg = tr_loss / len(train_iter)
-    tr_acc_avg = tr_acc / total_num
+    return epoch_loss / len(iterator)
 
-    tqdm.write("\nepoch: {}, tr_loss: {}, tr_acc: {}".format(epoch,
-                                                             tr_loss_avg,
-                                                             tr_acc_avg))
+def evaluate(model, iterator, loss_fn):
+    model.eval()
+    epoch_loss = 0
+    _bleu_score = 0
+    with torch.no_grad():
+        for batch in tqdm(iterator, desc='step', total=len(iterator)):
+            src = batch.src
+            trg = batch.src
+            output = model(src, trg[:, :-1])
+            output = output.contiguous().reshape(-1, output.size(-1))
+            trg = trg[: , 1:].contiguous().view(-1)
 
-    if epoch % 5 == 0:
-        state_dict = model.to(torch.device('cpu')).state_dict()
+            loss = loss_fn(output, trg)
+            epoch_loss += loss.item()
 
-        torch.save(state_dict, model_file)
+            total_bleu = []
+            for i in range(batch_size):
+                try:
+                    trg_words = idx_to_word(batch.trg[i], trg.vocab)
+                    output_words = output[i].max(dim=1)[1]
+                    output_words = idx_to_word(output_words, trg.vocab)
+                    bleu = bleu_score([output_words], [trg_words])
+                    total_bleu.append(bleu)
+                except:
+                    pass
+            
+            total_bleu = sum(total_bleu) / len(total_bleu)
+            _bleu_score += total_bleu
+
+    return epoch_loss / len(iterator), _bleu_score / len(iterator)
+
+
+def run(total_epoch, best_loss):
+    train_losses, test_losses, bleus = [], [], []
+    for step in range(total_epoch):
+        train_loss = train(model, train_iter, optimizer, loss_fn)
+        valid_loss, bleu = evaluate(model, valid_iter, loss_fn)
+
+        if step > warmup:
+            lr_scheduler.step(valid_loss)
+
+        train_losses.append(train_loss)
+        test_losses.append(valid_loss)
+        bleus.append(bleu)
+
+        if valid_loss < best_loss:
+            best_loss = valid_loss
+            torch.save(model.state_dict(), model_dir + 'model-{}.pt'.format(valid_loss))
+
+        f = open(result_dir + 'train_loss.txt', 'w')
+        f.write(str(train_losses))
+        f.close()
+
+        f = open(result_dir + 'bleu.txt', 'w')
+        f.write(str(bleus))
+        f.close()
+
+        f = open(result_dir + 'test_loss.txt', 'w')
+        f.write(str(test_losses))
+        f.close()
+
+        print('epoch : {} \t train loss : {:.3f} \t val loss : {:.3f} \t bleu : {:.3f}'.format(epoch + 1,
+                                                                                               train_loss,
+                                                                                               valid_loss,
+                                                                                               bleu))
+
+if __name__ == '__main__':
+    if not os.path.exists(model_dir):
+        os.makedirs(model_dir)
+
+    if not os.path.exists(result_dir):
+        os.makedirs(result_dir)
+
+    run(total_epoch=epoch, best_loss=inf)

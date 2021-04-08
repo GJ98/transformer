@@ -46,11 +46,13 @@ class Transformer(nn.Module):
         self.enc_embed = Embedding(vocab_size=enc_vocab_size,
                                    len=enc_len,
                                    d_model=d_model,
+                                   p=p,
                                    device=device)
 
         self.dec_embed = Embedding(vocab_size=dec_vocab_size,
                                    len=dec_len,
                                    d_model=d_model,
+                                   p=p,
                                    device=device)
 
         self.encoder = Encoder(d_model=d_model,

@@ -10,7 +10,6 @@ class ScaledDotProductAttention(nn.Module):
         """scaled dot product attention 구현 클래스"""
 
         super().__init__()
-        self.d_k = None
         self.softmax = nn.Softmax(dim=-1)
 
     def forward(self, 
@@ -30,22 +29,15 @@ class ScaledDotProductAttention(nn.Module):
             output (torch.Tensor(bs, head, len_q, d_v)): forward 결과값
         """
 
-        self.d_k = k.size(dim=-1)
+        d_k = k.size(dim=-1)
 
-        weight = q @ k.transpose(-1, -2) / math.sqrt(self.d_k)
+        weight = (q @ k.transpose(-1, -2)) / math.sqrt(d_k)
 
         if mask is not None:
-            weight.masked_fill(mask==False, -1e9)
+            weight.masked_fill(mask==False, -1e-12)
 
         scale_weight = self.softmax(weight)
 
         output = scale_weight @ v
 
         return output
-
-
-
-
-
-
-
