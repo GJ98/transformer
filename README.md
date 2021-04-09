@@ -2,7 +2,7 @@
 pytorch transformer
 
 ## train result
-![image](saved/result/train_result.png)
+![image](result/train_result.png)
 - Minimum Train Loss = 0.4788746972966299
 - Minimum Validation Loss = 0.33576502371579414
 
