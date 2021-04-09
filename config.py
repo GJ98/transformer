@@ -25,7 +25,7 @@ dec_len = 256
 p = 0.1
 
 #optimizer
-epoch = 1000
+epoch = 130
 init_lr = 1e-5
 adam_eps = 5e-9
 weight_decay = 5e-4

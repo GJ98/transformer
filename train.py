@@ -5,7 +5,6 @@ import torch
 from torch import nn
 from torch.optim import Adam
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-from torchtext.data.metrics import bleu_score
 
 from config import *
 from data import *
@@ -109,7 +108,7 @@ def run(total_epoch, best_loss):
         test_losses.append(valid_loss)
         bleus.append(bleu)
 
-        if valid_loss < best_loss:
+        if valid_loss < best_loss and epoch % 10 == 0:
             best_loss = valid_loss
             torch.save(model.state_dict(), model_dir + 'model-{}.pt'.format(valid_loss))
 
