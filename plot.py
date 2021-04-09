@@ -26,7 +26,7 @@ plt.legend(loc='upper right')
 plt.ylabel('cross entropy loss')
 plt.xlabel('epoch')
 
-plt.title('training result')
+plt.title('train result')
 plt.show()
 
 print(min(train))
