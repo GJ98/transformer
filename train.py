@@ -9,11 +9,12 @@ from torchtext.data.metrics import bleu_score
 
 from config import *
 from data import *
+from bleu import *
 
 from transformer.transformer import Transformer
 
 """
-ref : https://github.com/GJ98/transformer-1/blob/master/train.py
+ref : https://tutorials.pytorch.kr/beginner/torchtext_translation_tutorial.html
 """
 
 model = Transformer(d_model=d_model,
@@ -46,8 +47,8 @@ def train(model, iterator, optimizer, loss_fn):
     model.train()
     epoch_loss = 0
     for batch in tqdm(iterator, desc='step', total=len(iterator)):
-        src = batch.src.T.contiguous()
-        trg = batch.trg.T.contiguous()
+        src = batch.src
+        trg = batch.trg
 
         optimizer.zero_grad()
         output = model(src, trg[:, :-1])
@@ -62,45 +63,46 @@ def train(model, iterator, optimizer, loss_fn):
 
     return epoch_loss / len(iterator)
 
+
 def evaluate(model, iterator, loss_fn):
     model.eval()
     epoch_loss = 0
-    _bleu_score = 0
+    batch_bleu = []
     with torch.no_grad():
         for batch in tqdm(iterator, desc='step', total=len(iterator)):
-            src = batch.src.T.contiguous()
-            trg = batch.src.T.contiguous()
+            src = batch.src
+            trg = batch.trg
             output = model(src, trg[:, :-1])
-            output = output.contiguous().reshape(-1, output.size(-1))
-            trg = trg[: , 1:].contiguous().view(-1)
+            output_reshape = output.reshape(-1, output.size(-1))
+            trg_reshape = trg[:, 1:].contiguous().view(-1)
 
-            loss = loss_fn(output, trg)
+            loss = loss_fn(output_reshape, trg_reshape)
             epoch_loss += loss.item()
 
+            # bleu score calculation
             total_bleu = []
-            for i in range(batch_size):
+            for j in range(batch_size):
                 try:
-                    trg_words = idx_to_word(batch.trg[i], trg.vocab)
-                    output_words = output[i].max(dim=1)[1]
-                    output_words = idx_to_word(output_words, trg.vocab)
-                    bleu = bleu_score([output_words], [trg_words])
+                    trg_words = idx_to_word(trg[j], trg_vocab)
+                    output_words = idx_to_word(output[j].max(dim=1)[1], trg_vocab)
+                    bleu = get_bleu(hypotheses=output_words.split(), reference=trg_words.split())
                     total_bleu.append(bleu)
                 except:
                     pass
-            
+
             total_bleu = sum(total_bleu) / len(total_bleu)
-            _bleu_score += total_bleu
+            batch_bleu.append(total_bleu)
 
-    return epoch_loss / len(iterator), _bleu_score / len(iterator)
-
+    batch_bleu = sum(batch_bleu) / len(batch_bleu)
+    return epoch_loss / len(iterator), batch_bleu
 
 def run(total_epoch, best_loss):
     train_losses, test_losses, bleus = [], [], []
-    for step in range(total_epoch):
+    for epoch in range(total_epoch):
         train_loss = train(model, train_iter, optimizer, loss_fn)
         valid_loss, bleu = evaluate(model, valid_iter, loss_fn)
 
-        if step > warmup:
+        if epoch > warmup:
             lr_scheduler.step(valid_loss)
 
         train_losses.append(train_loss)

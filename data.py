@@ -1,6 +1,6 @@
 import torch
 
-from torchtext.legacy.data import Field, BucketIterator
+from torchtext.legacy.data import Field, BucketIterator, ReversibleField
 from torchtext.legacy.datasets.translation import Multi30k 
 
 from config import batch_size
@@ -17,18 +17,20 @@ python -m spacy download de
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
 src = Field(tokenize = "spacy",
-            tokenizer_language="de_core_news_sm",
-            init_token = '<sos>',
-            eos_token = '<eos>',
-            lower = True)
-
-trg = Field(tokenize = "spacy",
             tokenizer_language="en_core_web_sm",
             init_token = '<sos>',
             eos_token = '<eos>',
+            batch_first=True,
             lower = True)
 
-train_data, valid_data, test_data = Multi30k.splits(exts = ('.de', '.en'),
+trg = Field(tokenize = "spacy",
+            tokenizer_language="de_core_news_sm",
+            init_token = '<sos>',
+            eos_token = '<eos>',
+            batch_first=True,
+            lower = True)
+
+train_data, valid_data, test_data = Multi30k.splits(exts = ('.en', '.de'),
                                                     fields = (src, trg))
 
 src.build_vocab(train_data, min_freq = 2)
@@ -41,11 +43,7 @@ train_iter, valid_iter, test_iter = BucketIterator.splits((train_data, valid_dat
 enc_voc_size = len(src.vocab)
 dec_voc_size = len(trg.vocab)
 
-pad_idx = src.vocab.stoi['<pad>']
+src_vocab = src.vocab
+trg_vocab = trg.vocab
 
-def idx_to_word(x, vocab):
-    words = []
-    for i in x:
-        word = vocab.itos[i]
-        words.append(word)
-    return words
+pad_idx = src.vocab.stoi['<pad>']
