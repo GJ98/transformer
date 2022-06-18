@@ -34,7 +34,7 @@ class ScaledDotProductAttention(nn.Module):
         weight = (q @ k.transpose(-1, -2)) / math.sqrt(d_k)
 
         if mask is not None:
-            weight.masked_fill(mask==False, -1e-12)
+            weight.masked_fill(mask==False, -1e12)
 
         scale_weight = self.softmax(weight)
 
